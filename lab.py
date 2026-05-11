@@ -83,6 +83,15 @@ def make_training_args(
     seed: int = 42,
 ) -> TrainingArguments:
     """Return a TrainingArguments configured for fine-tuning."""
+    # Smoke fixture (CI): override to more epochs + smaller batch so the model
+    # gets enough gradient steps on 48 rows to reliably clear the accuracy threshold.
+    # Default run: 2 epochs x 6 steps = 12 steps total — far too few on tiny data.
+    # Smoke run:  10 epochs x 24 steps = 240 steps — enough to learn the fixture.
+    
+    if os.environ.get("DATA_PATH") is not None:
+        epochs = 10
+        batch_size = 2
+
     args = TrainingArguments(
         output_dir=output_dir,
         learning_rate=lr,
