@@ -1,0 +1,49 @@
+id,hypothesis_category,text,expected_label,rationale
+1,negation,The latest update did not improve battery life at all.,negative,Tests whether the model picks up the negation cue or just the trigger word 'improve'
+2,lexical_trigger,This app is no longer reliable on my phone.,negative,Strong positive cue 'reliable' negated by 'no longer'; tests cue-vs-context handling
+3,domain_shift,The team won the championship final last weekend.,neutral,Sports content unrelated to app-review training; tests domain-shift robustness
+
+4,negation,"The update did not fix the crashing issue.",negative,"Tests whether the model understands negation around failure language"
+5,negation,"I never experienced smoother performance after installing this version.",negative,"Checks negation with 'never' affecting positive phrase 'smoother performance'"
+6,negation,"The app is not working as expected anymore.",negative,"Tests ongoing failure expressed through 'not... anymore'"
+7,negation,"This version does not feel stable at all.",negative,"Tests negation combined with stability-related sentiment"
+8,negation,"The new interface is not worse, but it is not better either.",neutral,"Tests double negation and balanced sentiment interpretation"
+
+9,lexical_trigger,"The app looks fantastic but keeps freezing during use.",negative,"Positive cue 'fantastic' conflicts with severe functional issues"
+10,lexical_trigger,"Excellent layout ruined by constant lag and delays.",negative,"Strong positive word followed by performance failure"
+11,lexical_trigger,"Great design, but nothing actually works properly.",negative,"Tests override of positive trigger by strong negative context"
+12,lexical_trigger,"The experience feels premium yet notifications never arrive.",negative,"Positive branding word conflicts with failure"
+13,lexical_trigger,"Amazing features that are completely unusable in practice.",negative,"Tests mismatch between positive adjective and usability failure"
+14,lexical_trigger,"Good app for browsing, terrible for everything else.",negative,"Mixed cues test whether model balances sentiment correctly"
+15,lexical_trigger,"I love the interface but hate how slow it is.",negative,"Conflicting sentiment words in same sentence"
+16,lexical_trigger,"Solid performance with occasional crashes.",neutral,"Mixed sentiment with no dominant polarity"
+
+17,domain_shift,"The president discussed education reforms in a televised speech.",neutral,"Political domain unrelated to app reviews"
+18,domain_shift,"The recipe requires baking at 180 degrees for forty minutes.",neutral,"Cooking instructions unrelated to sentiment classification"
+19,domain_shift,"The basketball team improved their defense this season.",neutral,"Sports domain sentence without product sentiment"
+20,domain_shift,"The train schedule was updated due to maintenance work.",neutral,"Transport-domain informational text"
+21,domain_shift,"The research paper was published in a leading scientific journal.",neutral,"Academic domain sentence tests generalization"
+22,domain_shift,"The weather forecast predicts heavy rain tomorrow.",neutral,"Weather domain unrelated to app sentiment"
+23,domain_shift,"The museum opened a new exhibition on modern art.",neutral,"Cultural domain sentence is neutral in sentiment context"
+24,domain_shift,"The city announced new parking regulations downtown.",neutral,"Public policy update unrelated to app reviews"
+
+25,length_extreme,"Bad.",negative,"Extremely short input tests minimal-context classification"
+26,length_extreme,"Perfect.",positive,"Single-word positive input tests overconfidence on cues"
+27,length_extreme,"Okay.",neutral,"Ambiguous short input tests neutrality handling"
+28,length_extreme,"Still not fixed.",negative,"Short complaint with implicit negation"
+29,length_extreme,"Everything works flawlessly now.",positive,"Short strong positive statement"
+30,length_extreme,"The app is fine.",neutral,"Weak sentiment phrase tests neutrality detection"
+31,length_extreme,"The update improved performance, reduced crashes, enhanced UI responsiveness, fixed login issues, and improved battery usage, but introduced some minor layout inconsistencies and occasional delays in notifications that appear under heavy load conditions.",positive,"Long mixed-signal sentence tests aggregation of sentiment across many clauses"
+32,length_extreme,"At first the app seemed slow and unstable with frequent crashes and login failures, but after the latest patch it became significantly faster, more reliable, and easier to use, although a few features still feel unfinished and inconsistent.",neutral,"Mixed improvement and issues tests overall balance judgment"
+
+33,sarcasm,"Oh great, another update that makes everything worse.",negative,"Sarcastic positive phrase with negative meaning"
+34,sarcasm,"I absolutely enjoy when the app deletes my progress.",negative,"Sarcasm with positive verb 'enjoy'"
+35,sarcasm,"Fantastic job breaking the one thing that worked.",negative,"Sarcastic praise masking criticism"
+36,sarcasm,"Best experience ever if you like constant bugs.",negative,"Sarcasm with conditional framing"
+37,sarcasm,"Sure, because I love waiting five minutes to open a simple screen.",negative,"Sarcasm with exaggerated patience frustration"
+38,other,"The app is usable but not particularly impressive.",neutral,"Mild opinion without strong polarity"
+39,other,"I had a good experience overall, although some parts were confusing.",neutral,"Mixed sentiment without dominance"
+40,other,"Some features are useful while others feel unnecessary.",neutral,"Balanced evaluation with no clear polarity"
+41,other,"The latest update changed the UI and slightly improved speed.",neutral,"Factual description with weak sentiment signal"
+42,other,"Customer support responded quickly but did not resolve the issue.",negative,"Positive service speed vs unresolved problem conflict"
+43,other,"The app behaves differently depending on device and operating system.",neutral,"Device-dependent behavior with no sentiment"
