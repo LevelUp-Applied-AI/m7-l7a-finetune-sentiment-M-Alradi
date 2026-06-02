@@ -209,72 +209,155 @@ def evaluate_classifier(trainer: Trainer, tokenized_test) -> dict:
 
 
 def main() -> None:
-    """Orchestrate the full pipeline."""
+    """Orchestrate the full fine-tuning pipeline."""
+
+    # ----------------------------
+    # CONFIG
+    # ----------------------------
     data_path = get_data_path()
-    output_dir = "model"
-    model_name = "distilbert-base-uncased"
 
+    model_name = os.environ.get(
+        "MODEL_NAME",
+        "distilbert-base-uncased"
+    )
+
+    output_dir = os.environ.get(
+        "OUTPUT_DIR",
+        "model"
+    )
+
+    repo_id = os.environ.get("HF_REPO_ID")
+
+    # ----------------------------
+    # DATA PREP
+    # ----------------------------
     ds = prepare_dataset(data_path)
+
     tokenizer = AutoTokenizer.from_pretrained(model_name)
+
     tokenized = tokenize_dataset(ds, tokenizer)
-    tokenized.set_format("torch", columns=["input_ids", "attention_mask", "label"])
 
+    tokenized.set_format(
+        "torch",
+        columns=["input_ids", "attention_mask", "label"]
+    )
+
+    # ----------------------------
+    # TRAINING
+    # ----------------------------
     training_args = make_training_args(output_dir)
-    trainer = train_classifier(tokenized, model_name, training_args, tokenizer, num_labels=3)
 
-    # Save locally (model/ is gitignored)
+    trainer = train_classifier(
+        tokenized_ds=tokenized,
+        model_name=model_name,
+        training_args=training_args,
+        tokenizer=tokenizer,
+        num_labels=len(ID2LABEL),
+    )
+
+    # ----------------------------
+    # SAVE MODEL
+    # ----------------------------
     trainer.save_model(output_dir)
     tokenizer.save_pretrained(output_dir)
 
-    # Evaluate
+    print(f"\nSaved model to: {output_dir}")
+
+    # ----------------------------
+    # EVALUATION
+    # ----------------------------
     metrics, pred_logits, pred_idx = evaluate_classifier(
-    trainer,
-    tokenized["test"]
+        trainer,
+        tokenized["test"]
     )
-    
+
     with open("metrics.json", "w") as f:
         json.dump(metrics, f, indent=2)
+
     pred_probs = _softmax(pred_logits)
+
     id2label = trainer.model.config.id2label
-    label_names = [id2label[i] for i in range(len(id2label))]
 
-    true_labels = [id2label[i] for i in ds["test"]["label"]]
-    pred_labels = [id2label[i] for i in pred_idx]
+    label_names = [
+        id2label[i]
+        for i in range(len(id2label))
+    ]
 
-    cm = confusion_matrix(true_labels, pred_labels, labels=label_names)
-    cm_df = pd.DataFrame(cm, index=label_names, columns=label_names)
+    true_labels = [
+        id2label[i]
+        for i in ds["test"]["label"]
+    ]
+
+    pred_labels = [
+        id2label[i]
+        for i in pred_idx
+    ]
+
+    # ----------------------------
+    # CONFUSION MATRIX
+    # ----------------------------
+    cm = confusion_matrix(
+        true_labels,
+        pred_labels,
+        labels=label_names
+    )
+
+    cm_df = pd.DataFrame(
+        cm,
+        index=label_names,
+        columns=label_names
+    )
+
     cm_df.to_csv("confusion_matrix.csv")
 
-    # Predictions CSV (Task 4)
+    # ----------------------------
+    # PREDICTIONS CSV
+    # ----------------------------
     df_out = pd.DataFrame({
         "text": ds["test"]["text"],
         "label": true_labels,
         "predicted_label": pred_labels,
-        "predicted_probability": [float(pred_probs[i, pred_idx[i]]) for i in range(len(pred_idx))],
+        "predicted_probability": [
+            float(pred_probs[i, pred_idx[i]])
+            for i in range(len(pred_idx))
+        ],
     })
+
     for idx, name in id2label.items():
-        df_out[f"prob_{name}"] = [float(pred_probs[i, idx]) for i in range(len(pred_idx))]
+        df_out[f"prob_{name}"] = [
+            float(pred_probs[i, idx])
+            for i in range(len(pred_idx))
+        ]
+
     df_out.to_csv("predictions.csv", index=False)
 
-    print(f"Accuracy: {metrics['accuracy']:.4f}")
-    print(f"Macro-F1: {metrics['macro_f1']:.4f}")
+    # ----------------------------
+    # METRICS OUTPUT
+    # ----------------------------
+    print(f"\nAccuracy : {metrics['accuracy']:.4f}")
+    print(f"Macro-F1 : {metrics['macro_f1']:.4f}")
 
-    # Confusion matrix (for the evaluation report)
     print("\nConfusion matrix (rows=true, cols=pred):")
     print(cm_df.to_string())
 
-    # Push to Hugging Face Hub.
-    # Skipped in CI (DATA_PATH set); requires `huggingface-cli login` locally.
-    if os.environ.get("DATA_PATH") is None:
-        repo_id = "m7-app-review-sentiment"
-        try:
-            trainer.push_to_hub(repo_id)
-            tokenizer.push_to_hub(repo_id)
-            print(f"\nPushed to https://huggingface.co/alradi/{repo_id}")
-        except Exception as e:
-            print(f"\nHF Hub push failed: {e}")
-            print("Run `huggingface-cli login` and try again.")
+    # ----------------------------
+    # OPTIONAL HF UPLOAD
+    # ----------------------------
+    if repo_id and os.environ.get("DATA_PATH") is None:
 
+        try:
+            from huggingface_hub import upload_folder
+
+            upload_folder(
+                repo_id=repo_id,
+                folder_path=output_dir
+            )
+
+            print(f"\nPushed model to https://huggingface.co/{repo_id}")
+
+        except Exception as e:
+            print(f"\nHF Hub upload failed: {e}")
+            print("Make sure you ran: huggingface-cli login")
 
 def _softmax(logits: np.ndarray) -> np.ndarray:
     """Numerically stable softmax over the last dimension."""
